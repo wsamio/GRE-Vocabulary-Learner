@@ -31,13 +31,13 @@ Vocabulary-Learner/
 
 ## Screenshots
 
-### Vocabulary Selection
+### Flashcard View
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/950b5053-685d-4c51-8f9a-4799cb647ea8" alt="Vocabulary Learner - Vocabulary Selection" width="700">
 </p>
 
-### Flashcard View
+### Colored Flashcard
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/a69a4209-ed73-48ab-9a91-c8ce8de4f648" alt="Vocabulary Learner - Flashcard View" width="700">
@@ -49,7 +49,7 @@ Vocabulary-Learner/
   <img src="https://github.com/user-attachments/assets/089a77bc-51df-4998-aa99-9502c656e2ff" alt="Vocabulary Learner - Flashcard Notes" width="700">
 </p>
 
-### Vocabulary Learning Interface
+### Jump to Different Days
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/77cd2cb9-7986-4cfc-b2d3-b3f31de96743" alt="Vocabulary Learner - Learning Interface" width="700">
