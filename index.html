@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f7f5">
+  <title>Vocabulary Learner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">V</span>
+        <div>
+          <h1>Vocabulary Learner</h1>
+          <p id="dataset-meta">Loading vocabulary…</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button id="help-button" class="icon-button" type="button" aria-label="Show keyboard shortcuts">?</button>
+      </div>
+    </header>
+
+    <section id="learning-view" class="learning-view">
+      <div class="day-toolbar">
+        <button id="prev-day" class="nav-button" type="button" aria-label="Previous day">←</button>
+
+        <div class="day-picker-wrap">
+          <label for="day-select">Day</label>
+          <select id="day-select" aria-label="Select day"></select>
+        </div>
+
+        <button id="next-day" class="nav-button" type="button" aria-label="Next day">→</button>
+
+        <div class="day-stats" aria-live="polite">
+          <span id="word-position">1 / 30</span>
+          <span class="dot">·</span>
+          <span id="day-progress">0 learned</span>
+        </div>
+      </div>
+
+      <div class="card-stage" id="card-stage">
+        <div id="card" class="flashcard" role="button" tabindex="0" aria-label="Flashcard. Click to flip.">
+          <span class="card-inner">
+            <span class="card-face card-front">
+              <span class="status-badge" id="status-badge"></span>
+              <span class="word" id="word-front"></span>
+              <span class="card-footer">
+                <span>Click to reveal</span>
+                <span class="card-shortcut">R · G · W</span>
+              </span>
+            </span>
+
+            <span class="card-face card-back">
+              <span class="back-label">Your note</span>
+              <textarea id="note-input" maxlength="2000" placeholder="Add a meaning, mnemonic, example, or anything useful…" aria-label="Note for this word"></textarea>
+              <span class="card-footer">
+                <span id="note-status">Saved locally</span>
+                <span>N · edit note</span>
+              </span>
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <div class="word-navigation">
+        <button id="prev-word" class="text-button" type="button">← Previous</button>
+        <div id="word-dots" class="word-dots" aria-label="Word progress"></div>
+        <button id="next-word" class="text-button" type="button">Next →</button>
+      </div>
+
+      <div class="keyboard-hint">
+        <span><kbd>←</kbd><kbd>→</kbd> words</span>
+        <span><kbd>R</kbd> not memorized</span>
+        <span><kbd>G</kbd> memorized</span>
+        <span><kbd>W</kbd> reset color</span>
+        <span><kbd>N</kbd> note</span>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="help-dialog" class="help-dialog">
+    <button id="close-help" class="dialog-close" type="button" aria-label="Close">×</button>
+    <p class="eyebrow">Keyboard</p>
+    <h2>Learn without reaching for the mouse.</h2>
+    <div class="shortcut-list">
+      <div><kbd>←</kbd><span>Previous word</span></div>
+      <div><kbd>→</kbd><span>Next word</span></div>
+      <div><kbd>R</kbd><span>Mark red — not memorized</span></div>
+      <div><kbd>G</kbd><span>Mark green — memorized</span></div>
+      <div><kbd>W</kbd><span>Reset color only</span></div>
+      <div><kbd>N</kbd><span>Open the note</span></div>
+      <div><kbd>Space</kbd><span>Flip the card</span></div>
+      <div><kbd>Esc</kbd><span>Close note/help</span></div>
+    </div>
+    <p class="dialog-note">Notes and color states are saved automatically in this browser.</p>
+  </dialog>
+
+  <script src="script.js?v=3"></script>
+</body>
+</html>
