@@ -339,6 +339,15 @@ button { color: inherit; }
   text-transform: uppercase;
 }
 
+.back-word {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  font-size: clamp(20px, 2.8vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -.025em;
+  font-weight: 700;
+}
+
 .card-footer {
   position: absolute;
   right: clamp(24px, 5vw, 46px);

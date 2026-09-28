@@ -26,6 +26,7 @@
     cardStage: document.getElementById("card-stage"),
     card: document.getElementById("card"),
     wordFront: document.getElementById("word-front"),
+    wordBack: document.getElementById("word-back"),
     statusBadge: document.getElementById("status-badge"),
     noteInput: document.getElementById("note-input"),
     noteStatus: document.getElementById("note-status"),
@@ -415,6 +416,9 @@
       String(state.currentDayIndex);
 
     el.wordFront.textContent =
+      currentWord();
+
+    el.wordBack.textContent =
       currentWord();
 
     el.wordPosition.textContent =

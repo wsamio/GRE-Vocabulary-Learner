@@ -29,6 +29,10 @@ Vocabulary-Learner/
 
 > The exact file structure may vary depending on the current version of the project.
 
+## Live Demo
+
+Project is live at: https://gre-vocab-machine.netlify.app
+
 ## Screenshots
 
 ### Flashcard View
