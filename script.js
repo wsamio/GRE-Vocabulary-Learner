@@ -12,7 +12,9 @@
     currentWordIndex: 0,
     datasetKey: "",
     cardStates: {},
+    dictionary: {},
     isFlipped: false,
+    secondaryView: "note",
     touchStartX: null,
     touchStartY: null
   };
@@ -30,6 +32,16 @@
     statusBadge: document.getElementById("status-badge"),
     noteInput: document.getElementById("note-input"),
     noteStatus: document.getElementById("note-status"),
+    notePanel: document.getElementById("note-panel"),
+    dictionaryPanel: document.getElementById("dictionary-panel"),
+    dictionaryWord: document.getElementById("dictionary-word"),
+    dictionaryPos: document.getElementById("dictionary-pos"),
+    dictionaryDefinition: document.getElementById("dictionary-definition"),
+    dictionaryExamplePanel: document.getElementById("dictionary-example-panel"),
+    dictionaryExample: document.getElementById("dictionary-example"),
+    dictionarySynonyms: document.getElementById("dictionary-synonyms"),
+    dictionaryAntonyms: document.getElementById("dictionary-antonyms"),
+    speakButton: document.getElementById("speak-button"),
     wordPosition: document.getElementById("word-position"),
     dayProgress: document.getElementById("day-progress"),
     prevWord: document.getElementById("prev-word"),
@@ -165,6 +177,153 @@
       .filter(day => day.words.length > 0);
   }
 
+  function normalizeDictionary(rows) {
+    if (!rows.length) {
+      return {};
+    }
+
+    const headers = rows[0].map(cleanCell);
+    const indexOf = name =>
+      headers.findIndex(
+        header => header.toLowerCase() === name
+      );
+
+    const dayIndex = indexOf("day_number");
+    const wordIndex = indexOf("word");
+    const posIndex = indexOf("parts_of_speech");
+    const definitionIndex = indexOf("definition");
+    const synonymsIndex = indexOf("synonyms");
+    const antonymsIndex = indexOf("antonyms");
+    const exampleIndex = indexOf("example");
+
+    if (
+      dayIndex < 0 ||
+      wordIndex < 0 ||
+      posIndex < 0 ||
+      definitionIndex < 0 ||
+      synonymsIndex < 0 ||
+      antonymsIndex < 0
+    ) {
+      return {};
+    }
+
+    const dictionary = {};
+
+    rows.slice(1).forEach(row => {
+      const day = cleanCell(row[dayIndex]);
+      const word = cleanCell(row[wordIndex]);
+
+      if (!day || !word) {
+        return;
+      }
+
+      dictionary[`${day}:${word.toLowerCase()}`] = {
+        word,
+        partsOfSpeech: cleanCell(row[posIndex]),
+        definition: cleanCell(row[definitionIndex]),
+        example: exampleIndex >= 0
+          ? cleanCell(row[exampleIndex])
+          : "",
+        synonyms: cleanCell(row[synonymsIndex]),
+        antonyms: cleanCell(row[antonymsIndex])
+      };
+    });
+
+    return dictionary;
+  }
+
+  function dictionaryEntry() {
+    const day = state.days[state.currentDayIndex];
+    const word = currentWord();
+
+    return state.dictionary[
+      `${day?.id ?? ""}:${word.toLowerCase()}`
+    ] || null;
+  }
+
+  function setText(element, value, fallback = "—") {
+    if (!element) return;
+    element.textContent = value || fallback;
+  }
+
+  function renderDictionary() {
+    const entry = dictionaryEntry();
+
+    setText(el.dictionaryWord, entry?.word || currentWord());
+    setText(el.dictionaryPos, entry?.partsOfSpeech || "");
+    setText(el.dictionaryDefinition, entry?.definition || "Dictionary entry unavailable.");
+
+    if (el.dictionaryExamplePanel && el.dictionaryExample) {
+      const example = entry?.example || "";
+      el.dictionaryExamplePanel.hidden = !example;
+      setText(el.dictionaryExample, example, "");
+    }
+
+    setText(el.dictionarySynonyms, entry?.synonyms || "—");
+    setText(el.dictionaryAntonyms, entry?.antonyms || "—");
+
+    if (el.dictionaryPanel) {
+      el.dictionaryPanel.hidden =
+        state.secondaryView !== "dictionary";
+    }
+
+    if (el.notePanel) {
+      el.notePanel.hidden =
+        state.secondaryView === "dictionary";
+    }
+  }
+
+  function speakCurrentWord() {
+    if (!("speechSynthesis" in window)) {
+      showToast("Pronunciation is not supported here");
+      return;
+    }
+
+    const word = currentWord();
+
+    if (!word) return;
+
+    window.speechSynthesis.cancel();
+
+    const utterance =
+      new SpeechSynthesisUtterance(word);
+
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    const voices =
+      window.speechSynthesis.getVoices();
+
+    const usVoice =
+      voices.find(
+        voice => voice.lang?.toLowerCase() === "en-us"
+      ) ||
+      voices.find(
+        voice => voice.lang?.toLowerCase().startsWith("en-us")
+      );
+
+    if (usVoice) {
+      utterance.voice = usVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function showDictionary() {
+    state.secondaryView = "dictionary";
+    state.isFlipped = true;
+
+    render();
+  }
+
+  function showNote() {
+    state.secondaryView = "note";
+    state.isFlipped = true;
+
+    render();
+  }
+
   function simpleHash(text) {
     let hash = 2166136261;
 
@@ -265,6 +424,7 @@
       );
 
     state.isFlipped = false;
+    state.secondaryView = "note";
 
     renderDaySelect();
     render();
@@ -322,6 +482,8 @@
 
     el.noteInput.value =
       cardState.note || "";
+
+    renderDictionary();
   }
 
   function renderDots() {
@@ -467,6 +629,15 @@
       state.isFlipped
     );
 
+    el.card.setAttribute(
+      "aria-label",
+      state.secondaryView === "dictionary" && state.isFlipped
+        ? "Dictionary card. Press D or Escape to return to the word."
+        : state.isFlipped
+          ? "Flashcard back with personal note. Press Space or Escape to return to the word."
+          : "Vocabulary flashcard. Press Space to flip, D for dictionary."
+    );
+
     renderStatus();
     renderDots();
   }
@@ -489,6 +660,7 @@
       );
 
     state.isFlipped = false;
+    state.secondaryView = "note";
 
     render();
     saveState();
@@ -508,6 +680,7 @@
 
     state.currentWordIndex = 0;
     state.isFlipped = false;
+    state.secondaryView = "note";
 
     render();
     saveState();
@@ -585,6 +758,7 @@
   }
 
   function openNote() {
+    state.secondaryView = "note";
     state.isFlipped = true;
 
     el.card.classList.add(
@@ -683,16 +857,41 @@
       event.preventDefault();
       openNote();
 
+    } else if (key === "d") {
+      event.preventDefault();
+
+      if (
+        state.isFlipped &&
+        state.secondaryView === "dictionary"
+      ) {
+        state.isFlipped = false;
+        state.secondaryView = "note";
+        render();
+      } else {
+        showDictionary();
+      }
+
+    } else if (key === "s") {
+      event.preventDefault();
+      speakCurrentWord();
+
     } else if (
       event.code === "Space"
     ) {
       event.preventDefault();
-      toggleFlip();
+
+      if (state.isFlipped) {
+        state.isFlipped = false;
+        render();
+      } else {
+        toggleFlip();
+      }
 
     } else if (
       event.key === "Escape"
     ) {
       state.isFlipped = false;
+      state.secondaryView = "note";
       render();
     }
   }
@@ -747,29 +946,47 @@
 
   async function loadVocabulary() {
     try {
-      const response =
-        await fetch(
-          "vocabulary.csv",
-          {
-            cache: "no-store"
-          }
-        );
+      const [vocabularyResponse, dictionaryResponse] =
+        await Promise.all([
+          fetch(
+            "vocabulary.csv",
+            {
+              cache: "no-store"
+            }
+          ),
+          fetch(
+            "dictionary.csv",
+            {
+              cache: "no-store"
+            }
+          )
+        ]);
 
-      if (!response.ok) {
+      if (!vocabularyResponse.ok) {
         return;
       }
 
-      const text =
-        await response.text();
+      const vocabularyText =
+        await vocabularyResponse.text();
 
-      const rows =
-        parseCSV(text);
+      const vocabularyRows =
+        parseCSV(vocabularyText);
 
       const days =
-        normalizeCSV(rows);
+        normalizeCSV(vocabularyRows);
 
       if (!days.length) {
         return;
+      }
+
+      if (dictionaryResponse.ok) {
+        const dictionaryText =
+          await dictionaryResponse.text();
+
+        state.dictionary =
+          normalizeDictionary(
+            parseCSV(dictionaryText)
+          );
       }
 
       const ui =
@@ -793,7 +1010,6 @@
       );
     } catch {
       // Intentionally do nothing.
-      // There is no error screen.
       // If vocabulary.csv is unavailable,
       // no vocabulary is displayed.
     }
@@ -889,6 +1105,14 @@
         saveNote(
           event.target.value
         )
+    );
+
+    el.speakButton.addEventListener(
+      "click",
+      event => {
+        event.stopPropagation();
+        speakCurrentWord();
+      }
     );
 
     el.cardStage.addEventListener(

@@ -54,12 +54,56 @@
             </span>
 
             <span class="card-face card-back">
-              <span class="back-label">Your note</span>
-              <span class="back-word" id="word-back"></span>
-              <textarea id="note-input" maxlength="2000" placeholder="Add a meaning, mnemonic, example, or anything useful…" aria-label="Note for this word"></textarea>
-              <span class="card-footer">
-                <span id="note-status">Saved locally</span>
-                <span>N · edit note</span>
+              <span id="note-panel" class="secondary-panel">
+                <span class="back-label">Your note</span>
+                <span class="back-word" id="word-back"></span>
+                <textarea id="note-input" maxlength="2000" placeholder="Add a meaning, mnemonic, example, or anything useful…" aria-label="Note for this word"></textarea>
+                <span class="card-footer">
+                  <span id="note-status">Saved locally</span>
+                  <span>N · edit note</span>
+                </span>
+              </span>
+
+              <span id="dictionary-panel" class="secondary-panel dictionary-panel" hidden>
+                <span class="dictionary-header">
+                  <span class="dictionary-word-row">
+                    <span class="dictionary-word" id="dictionary-word"></span>
+                    <button id="speak-button" class="speaker-button" type="button" aria-label="Hear pronunciation" title="Hear pronunciation (S)">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 10v4h4l5 4V6l-5 4H4Z"></path>
+                        <path d="M16 9.5a4 4 0 0 1 0 5"></path>
+                        <path d="M18.5 7a7.5 7.5 0 0 1 0 10"></path>
+                      </svg>
+                    </button>
+                  </span>
+                  <span class="dictionary-pos" id="dictionary-pos"></span>
+                </span>
+
+                <span class="dictionary-definition">
+                  <span class="dictionary-section-label">Definition</span>
+                  <span id="dictionary-definition"></span>
+                </span>
+
+                <span class="dictionary-example" id="dictionary-example-panel" hidden>
+                  <span class="dictionary-section-label">Example</span>
+                  <span id="dictionary-example"></span>
+                </span>
+
+                <span class="dictionary-lists">
+                  <span class="dictionary-list">
+                    <span class="dictionary-section-label">Synonyms</span>
+                    <span id="dictionary-synonyms"></span>
+                  </span>
+                  <span class="dictionary-list">
+                    <span class="dictionary-section-label">Antonyms</span>
+                    <span id="dictionary-antonyms"></span>
+                  </span>
+                </span>
+
+                <span class="dictionary-footer">
+                  <span>Dictionary</span>
+                  <span>D · back to word</span>
+                </span>
               </span>
             </span>
           </span>
@@ -78,6 +122,8 @@
         <span><kbd>G</kbd> memorized</span>
         <span><kbd>W</kbd> reset color</span>
         <span><kbd>N</kbd> note</span>
+        <span><kbd>D</kbd> dictionary</span>
+        <span><kbd>S</kbd> pronunciation</span>
       </div>
     </section>
   </main>
@@ -95,12 +141,14 @@
       <div><kbd>G</kbd><span>Mark green — memorized</span></div>
       <div><kbd>W</kbd><span>Reset color only</span></div>
       <div><kbd>N</kbd><span>Open the note</span></div>
+      <div><kbd>D</kbd><span>Open the dictionary</span></div>
+      <div><kbd>S</kbd><span>Hear pronunciation</span></div>
       <div><kbd>Space</kbd><span>Flip the card</span></div>
-      <div><kbd>Esc</kbd><span>Close note/help</span></div>
+      <div><kbd>Esc</kbd><span>Return to the word</span></div>
     </div>
     <p class="dialog-note">Notes and color states are saved automatically in this browser.</p>
   </dialog>
 
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=4"></script>
 </body>
 </html>
