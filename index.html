@@ -3,7 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f7f7f5">
+  <meta name="theme-color" content="#f7f7f5" id="theme-color-meta">
+  <script>
+    (() => {
+      try {
+        const ui = JSON.parse(localStorage.getItem("vocabularyLearner.ui.v1") || "{}");
+        const theme = ui.theme === "dark" || ui.theme === "light" ? ui.theme : "light";
+        document.documentElement.dataset.theme = theme;
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
   <title>Vocabulary Learner</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -20,6 +31,17 @@
 
       <div class="top-actions">
         <button id="help-button" class="icon-button" type="button" aria-label="Show keyboard shortcuts">?</button>
+        <button id="theme-toggle" class="theme-toggle" type="button" role="switch" aria-checked="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+          <span class="theme-toggle-track" aria-hidden="true">
+            <span class="theme-icon theme-icon-sun">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+            </span>
+            <span class="theme-toggle-thumb"></span>
+            <span class="theme-icon theme-icon-moon">
+              <svg viewBox="0 0 24 24"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+            </span>
+          </span>
+        </button>
       </div>
     </header>
 
@@ -149,6 +171,6 @@
     <p class="dialog-note">Notes and color states are saved automatically in this browser.</p>
   </dialog>
 
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
 </body>
 </html>

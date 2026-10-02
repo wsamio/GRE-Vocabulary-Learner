@@ -50,7 +50,9 @@
     toast: document.getElementById("toast"),
     helpButton: document.getElementById("help-button"),
     helpDialog: document.getElementById("help-dialog"),
-    closeHelp: document.getElementById("close-help")
+    closeHelp: document.getElementById("close-help"),
+    themeToggle: document.getElementById("theme-toggle"),
+    themeColorMeta: document.getElementById("theme-color-meta")
   };
 
   function safeGet(key, fallback) {
@@ -69,6 +71,75 @@
     } catch {
       return false;
     }
+  }
+
+  function getTheme() {
+    return document.documentElement.dataset.theme === "dark"
+      ? "dark"
+      : "light";
+  }
+
+  function applyTheme(theme, persist = true) {
+    const nextTheme = theme === "dark" ? "dark" : "light";
+    document.documentElement.dataset.theme = nextTheme;
+
+    if (el.themeToggle) {
+      const dark = nextTheme === "dark";
+      el.themeToggle.setAttribute("aria-checked", String(dark));
+      el.themeToggle.setAttribute(
+        "aria-label",
+        dark ? "Switch to light mode" : "Switch to dark mode"
+      );
+      el.themeToggle.title = dark
+        ? "Switch to light mode"
+        : "Switch to dark mode";
+    }
+
+    if (el.themeColorMeta) {
+      el.themeColorMeta.setAttribute(
+        "content",
+        nextTheme === "dark" ? "#171818" : "#f7f7f5"
+      );
+    }
+
+    if (!persist) return;
+
+    const ui = safeGet(STORAGE.ui, {});
+    safeSet(STORAGE.ui, {
+      ...(ui && typeof ui === "object" ? ui : {}),
+      theme: nextTheme
+    });
+  }
+
+  function toggleTheme() {
+    const nextTheme = getTheme() === "dark" ? "light" : "dark";
+    applyTheme(nextTheme);
+    showToast(nextTheme === "dark" ? "Dark mode" : "Light mode");
+  }
+
+  function initCursorGlow() {
+    if (window.matchMedia?.("(pointer: coarse)").matches) return;
+
+    let raf = 0;
+    let x = window.innerWidth * 0.5;
+    let y = window.innerHeight * 0.2;
+
+    const update = () => {
+      document.documentElement.style.setProperty("--cursor-x", `${x}px`);
+      document.documentElement.style.setProperty("--cursor-y", `${y}px`);
+      document.body.classList.add("cursor-glow-visible");
+      raf = 0;
+    };
+
+    window.addEventListener("pointermove", event => {
+      x = event.clientX;
+      y = event.clientY;
+      if (!raf) raf = requestAnimationFrame(update);
+    }, { passive: true });
+
+    window.addEventListener("pointerleave", () => {
+      document.body.classList.remove("cursor-glow-visible");
+    });
   }
 
   function showToast(message) {
@@ -373,10 +444,13 @@
       state.cardStates
     );
 
+    const ui = safeGet(STORAGE.ui, {});
     safeSet(STORAGE.ui, {
+      ...(ui && typeof ui === "object" ? ui : {}),
       datasetKey: state.datasetKey,
       dayIndex: state.currentDayIndex,
-      wordIndex: state.currentWordIndex
+      wordIndex: state.currentWordIndex,
+      theme: getTheme()
     });
   }
 
@@ -992,6 +1066,10 @@
       const ui =
         safeGet(STORAGE.ui, {});
 
+      if (ui && (ui.theme === "dark" || ui.theme === "light")) {
+        applyTheme(ui.theme, false);
+      }
+
       const newDatasetKey =
         datasetKeyFor(days);
 
@@ -1017,6 +1095,13 @@
 
   function boot() {
     if (!el.card) return;
+
+    applyTheme(getTheme(), false);
+    initCursorGlow();
+
+    if (el.themeToggle) {
+      el.themeToggle.addEventListener("click", toggleTheme);
+    }
 
     el.daySelect.addEventListener(
       "change",
