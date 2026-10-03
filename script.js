@@ -11,6 +11,8 @@
     currentDayIndex: 0,
     currentWordIndex: 0,
     datasetKey: "",
+    originalDays: [],
+    dayOrders: {},
     cardStates: {},
     dictionary: {},
     isFlipped: false,
@@ -52,6 +54,7 @@
     helpDialog: document.getElementById("help-dialog"),
     closeHelp: document.getElementById("close-help"),
     themeToggle: document.getElementById("theme-toggle"),
+    shuffleDay: document.getElementById("shuffle-day"),
     themeColorMeta: document.getElementById("theme-color-meta")
   };
 
@@ -410,10 +413,169 @@
     return simpleHash(JSON.stringify(days));
   }
 
+  function wordIdentity(word) {
+    return String(word ?? "").trim().toLowerCase();
+  }
+
+  function cardKeyFor(dayId, word, datasetKey = state.datasetKey) {
+    return `${datasetKey}:${dayId}:${wordIdentity(word)}`;
+  }
+
   function cardKey(dayIndex, wordIndex) {
     const day = state.days[dayIndex];
 
-    return `${state.datasetKey}:${day.id}:${wordIndex}`;
+    return cardKeyFor(
+      day?.id ?? "",
+      day?.words?.[wordIndex] ?? ""
+    );
+  }
+
+  function cloneDays(days) {
+    return days.map(day => ({
+      id: day.id,
+      words: [...day.words]
+    }));
+  }
+
+  function validOrder(order, wordCount) {
+    return Array.isArray(order) &&
+      order.length === wordCount &&
+      order.every(index =>
+        Number.isInteger(index) &&
+        index >= 0 &&
+        index < wordCount
+      ) &&
+      new Set(order).size === wordCount;
+  }
+
+  function applyDayOrders(days, dayOrders) {
+    return days.map(day => {
+      const saved = dayOrders?.[day.id];
+
+      if (!saved?.shuffled || !validOrder(saved.order, day.words.length)) {
+        return {
+          id: day.id,
+          words: [...day.words]
+        };
+      }
+
+      return {
+        id: day.id,
+        words: saved.order.map(index => day.words[index])
+      };
+    });
+  }
+
+  function migrateCardStates(days, storedStates, datasetKey) {
+    if (!storedStates || typeof storedStates !== "object") {
+      return {};
+    }
+
+    const migrated = { ...storedStates };
+
+    days.forEach(day => {
+      day.words.forEach((word, index) => {
+        const legacyKey = `${datasetKey}:${day.id}:${index}`;
+        const stableKey = cardKeyFor(day.id, word, datasetKey);
+
+        if (
+          Object.prototype.hasOwnProperty.call(migrated, legacyKey) &&
+          !Object.prototype.hasOwnProperty.call(migrated, stableKey)
+        ) {
+          migrated[stableKey] = migrated[legacyKey];
+        }
+
+        if (legacyKey !== stableKey) {
+          delete migrated[legacyKey];
+        }
+      });
+    });
+
+    return migrated;
+  }
+
+  function shuffleIndexes(length) {
+    const indexes = Array.from({ length }, (_, index) => index);
+
+    for (let index = indexes.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [indexes[index], indexes[randomIndex]] = [indexes[randomIndex], indexes[index]];
+    }
+
+    if (
+      indexes.length > 1 &&
+      indexes.every((value, index) => value === index)
+    ) {
+      [indexes[0], indexes[1]] = [indexes[1], indexes[0]];
+    }
+
+    return indexes;
+  }
+
+  function updateShuffleButton() {
+    if (!el.shuffleDay) return;
+
+    const day = state.originalDays[state.currentDayIndex];
+    const saved = day ? state.dayOrders[day.id] : null;
+    const shuffled =
+      Boolean(saved?.shuffled && validOrder(saved.order, day?.words?.length ?? 0));
+
+    el.shuffleDay.classList.toggle("is-active", shuffled);
+    el.shuffleDay.setAttribute(
+      "aria-pressed",
+      String(shuffled)
+    );
+    el.shuffleDay.setAttribute(
+      "aria-label",
+      shuffled
+        ? `Restore original order for Day ${day?.id ?? ""}`
+        : `Shuffle words for Day ${day?.id ?? ""}`
+    );
+    el.shuffleDay.title =
+      shuffled
+        ? "Restore original CSV order"
+        : "Shuffle this day's words";
+    el.shuffleDay.textContent = shuffled ? "↶" : "↝";
+  }
+
+  function toggleDayOrder() {
+    const originalDay = state.originalDays[state.currentDayIndex];
+
+    if (!originalDay) return;
+
+    const currentWord = state.days[state.currentDayIndex]?.words[state.currentWordIndex] ?? "";
+    const existing = state.dayOrders[originalDay.id];
+    const isShuffled =
+      Boolean(existing?.shuffled && validOrder(existing.order, originalDay.words.length));
+
+    if (isShuffled) {
+      delete state.dayOrders[originalDay.id];
+    } else {
+      state.dayOrders[originalDay.id] = {
+        shuffled: true,
+        order: shuffleIndexes(originalDay.words.length)
+      };
+    }
+
+    state.days = applyDayOrders(state.originalDays, state.dayOrders);
+
+    const nextIndex =
+      state.days[state.currentDayIndex].words.findIndex(
+        word => word === currentWord
+      );
+
+    state.currentWordIndex = nextIndex >= 0 ? nextIndex : 0;
+    state.isFlipped = false;
+    state.secondaryView = "note";
+
+    render();
+    saveState();
+
+    showToast(
+      isShuffled
+        ? `Day ${originalDay.id} restored to CSV order`
+        : `Day ${originalDay.id} shuffled`
+    );
   }
 
   function currentWord() {
@@ -450,6 +612,7 @@
       datasetKey: state.datasetKey,
       dayIndex: state.currentDayIndex,
       wordIndex: state.currentWordIndex,
+      dayOrders: state.dayOrders,
       theme: getTheme()
     });
   }
@@ -457,20 +620,34 @@
   function loadDataset(
     days,
     preferredDay = 0,
-    preferredWord = 0
+    preferredWord = 0,
+    savedDayOrders = {}
   ) {
-    state.days = days;
+    state.originalDays = cloneDays(days);
     state.datasetKey =
-      datasetKeyFor(days);
+      datasetKeyFor(state.originalDays);
+
+    state.dayOrders =
+      savedDayOrders &&
+        typeof savedDayOrders === "object"
+        ? savedDayOrders
+        : {};
+
+    state.days =
+      applyDayOrders(
+        state.originalDays,
+        state.dayOrders
+      );
 
     const storedStates =
       safeGet(STORAGE.state, {});
 
     state.cardStates =
-      storedStates &&
-        typeof storedStates === "object"
-        ? storedStates
-        : {};
+      migrateCardStates(
+        state.originalDays,
+        storedStates,
+        state.datasetKey
+      );
 
     if (!days.length) {
       return;
@@ -526,6 +703,8 @@
 
     el.daySelect.value =
       String(state.currentDayIndex);
+
+    updateShuffleButton();
   }
 
   function renderStatus() {
@@ -683,6 +862,8 @@
 
     el.dayProgress.textContent =
       `${learned} learned`;
+
+    updateShuffleButton();
 
     el.prevDay.disabled =
       state.currentDayIndex === 0;
@@ -1077,6 +1258,13 @@
         ui.datasetKey ===
         newDatasetKey;
 
+      const savedDayOrders =
+        sameDataset &&
+        ui.dayOrders &&
+        typeof ui.dayOrders === "object"
+          ? ui.dayOrders
+          : {};
+
       loadDataset(
         days,
         sameDataset
@@ -1084,7 +1272,8 @@
           : 0,
         sameDataset
           ? Number(ui.wordIndex) || 0
-          : 0
+          : 0,
+        savedDayOrders
       );
     } catch {
       // Intentionally do nothing.
@@ -1122,6 +1311,13 @@
       "click",
       () => moveDay(1)
     );
+
+    if (el.shuffleDay) {
+      el.shuffleDay.addEventListener(
+        "click",
+        toggleDayOrder
+      );
+    }
 
     el.prevWord.addEventListener(
       "click",

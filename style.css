@@ -361,7 +361,7 @@ html[data-theme="dark"] .theme-icon-moon { color: #d7fbff; }
 
 .day-toolbar {
   display: grid;
-  grid-template-columns: 42px auto 42px 1fr;
+  grid-template-columns: 42px auto 42px 42px 1fr;
   align-items: center;
   gap: 10px;
   max-width: 600px;
@@ -379,6 +379,43 @@ html[data-theme="dark"] .theme-icon-moon { color: #d7fbff; }
   opacity: .35;
   cursor: not-allowed;
   transform: none;
+}
+
+.shuffle-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,.65);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease, color .16s ease;
+}
+
+.shuffle-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.shuffle-button.is-active {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+
+html[data-theme="dark"] .shuffle-button {
+  background: rgba(255,255,255,.045);
+}
+
+html[data-theme="dark"] .shuffle-button.is-active {
+  background: #f1f3f3;
+  border-color: #f1f3f3;
+  color: #181919;
 }
 
 .day-picker-wrap {
@@ -880,7 +917,7 @@ kbd {
   .learning-view { padding-top: 34px; }
 
   .day-toolbar {
-    grid-template-columns: 40px 1fr 40px;
+    grid-template-columns: 40px 1fr 40px 40px;
     margin-bottom: 25px;
   }
 
